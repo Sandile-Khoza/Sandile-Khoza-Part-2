@@ -26,7 +26,7 @@ public class Login {
         
         if (password.length() < 8) return false;
         
-        //logic below was written with help from ChatGpt (OpenAI, 2025)
+    //logic below was written with help from ChatGpt (OpenAI, 2025)
     //OpenAI (2025) ChatGPT [Online]. Available at: https://chat.openai.com/ (Accessed : 16 April 2025)
         for (char c : password.toCharArray()) {
             if (Character.isUpperCase(c)) hasUppercase = true;

@@ -9,19 +9,10 @@ package com.mycompany.chat;
  * @author lab_services_student
  */
 import javax.swing.JOptionPane;
-import java.util.ArrayList;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
 
 public class Chat {
-     
-    //array list that stores all sent messages
-    private static final  ArrayList<Message> sentMessages = new ArrayList<>();
-    //otal messages sent
-    private static int totalMessagesSent = 0;
-
-    public static void main(String[] args) {
+       
+    public static void main(String[] args) {     
 
         //Registration
         //firstName
@@ -67,117 +58,88 @@ public class Chat {
         //Ask user to login based on their details
         JOptionPane.showMessageDialog(null, Login.registerUser(firstName, lastName, username, password, phoneNumber));
 
+              //LOGIN
         boolean isLoggedIn = Login.loginUser(
             JOptionPane.showInputDialog("Login - enter your username:"),
             JOptionPane.showInputDialog("Login - enter your password:")
         );
         //This JOptionPane returns their login status
         JOptionPane.showMessageDialog(null, Login.returnLoginStatus(isLoggedIn, firstName, lastName));
-
         if (!isLoggedIn) return;
         
-        //-------Messaging ------//
-
+        
+    
         JOptionPane.showMessageDialog(null, "Welcome to QuickChat.");
+        
+        //Message Manager to manage messages
+        MessageManager messageManager = new MessageManager();
+        
+        //load stored messages from file int arrayys
+        messageManager.loadStoredMessagesFromJson();
 
-        //Ask how many messages user wants to send
-        int messageLimit = Integer.parseInt(JOptionPane.showInputDialog("How many messages would you like to send?"));
-        //This ask user to choose an option 
+        // Main menu
         while (true) {
-            String menu = "Choose an option:\n1) Send Message\n2) Show recently sent messages\n3) Quit";
+            String menu = """
+                Choose an option:
+                1) Send Message
+                2) Show Recently Sent Messages
+                3) Manage Messages (All Arrays)
+                4) Quit
+                """;
+
             int choice = Integer.parseInt(JOptionPane.showInputDialog(menu));
 
-            switch (choice) {
-                case 1 -> {
-                    //warning if limit reached
-                    if (totalMessagesSent >= messageLimit) {
-                        JOptionPane.showMessageDialog(null, "Message limit reached.");
-                        break;
-                    }
+           switch (choice) {
+    case 1 -> messageManager.handleMessagePrompt();
+    case 2 -> messageManager.displaySendersAndRecipients();
+    case 3 -> {
+        // Manage messages submenu
+        boolean back = false;
+        while (!back) {
+            String fullMenu = """
+                Message Manager:
+                1) Display All Sent Messages
+                2) Display All Stored Messages
+                3) View All Disregarded Messages
+                4) Search by Message ID
+                5) Search by Recipient
+                6) Delete by Message Hash
+                7) Display Longest Sent Message
+                8) Display Full Sent Report
+                9) Back to Main Menu
+                """;
+            int option = Integer.parseInt(JOptionPane.showInputDialog(fullMenu));
 
-                    //recipient phone number
-                    String recipient = JOptionPane.showInputDialog("Enter recipient's phone number (+ and 10 digits):");
-                    while (!Message.checkRecipientCell(recipient)) {
-                        recipient = JOptionPane.showInputDialog("Invalid recipient. Must start with '+' and be max 10 characters. Try again:");
-                    }
-
-                    String text = JOptionPane.showInputDialog("Enter your message text:");
-                    if (text.length() > 250){
-                        JOptionPane.showMessageDialog(null, "Please enter a message of less than 250 characters. ");
-                        break;
-                    }
-                    
-                    //Prompt the User to choose action,either to send, store or disregard the message
-                    String[] options = {"Send", "Store to Json", "Disregard"};
-                    int action = JOptionPane.showOptionDialog(null, "Choose what to do with the message: ",
-                     "Message Options", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
-                     null, options, options[0]);
-                    
-                    if (action == 2 || action == JOptionPane.CLOSED_OPTION){
-                    JOptionPane.showMessageDialog(null, "Message disregarded.");
-                    break;
-                    }
-                    
-                    //create and optionally store the message
-                    try {
-        Message msg = new Message(recipient, text);
-        sentMessages.add(msg);
-        totalMessagesSent++;
-
-        if (action == 0) { // Send
-            JOptionPane.showMessageDialog(null, "Message successfully sent\n" + msg.displayMessageDetails());
-
-            // Prompt to delete
-            String input = JOptionPane.showInputDialog("Press 0 to delete message");
-            if ("0".equals(input)) {
-                sentMessages.remove(msg);
-                totalMessagesSent--;
-                JOptionPane.showMessageDialog(null, "Message deleted.");
-            }
-
-        } else if (action == 1) { // Store
-            JOptionPane.showMessageDialog(null, "Message successfully stored\n" + msg.displayMessageDetails());
-        }
-
-    } catch (IllegalArgumentException e) {
-        JOptionPane.showMessageDialog(null, "Failed to send message: " + e.getMessage());
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(null, "Unexpected error: " + e.getMessage());
-    }
-}
-                //display messages sent
-                case 2 -> {
-                   String result = Message.printMessages(sentMessages);
-                   JOptionPane.showMessageDialog(null, result);
-                }
-                //Stores messages to file before quitting
-                case 3 -> {
-                    storeMessagesToJsonFile(sentMessages);
-                    JOptionPane.showMessageDialog(null, "Messages stored as JSON file.");
-                     JOptionPane.showMessageDialog(null, "Total messages sent: " + totalMessagesSent + "\nExiting app.");
-                    System.exit(0);
-                }
-               //Shows total messages sent and exits the app
+            switch (option) {
+                case 1 -> messageManager.displaySendersAndRecipients();
+                case 2 -> messageManager.displayStoredMessages();
+                case 3 -> messageManager.displayDisregardedMessages();
                 case 4 -> {
-                    JOptionPane.showMessageDialog(null, "Total messages sent: " + totalMessagesSent);
+                    String id = JOptionPane.showInputDialog("Enter message ID:");
+                    messageManager.searchByMessageID(id);
                 }
-                
+                case 5 -> {
+                    String recipient = JOptionPane.showInputDialog("Enter recipient number:");
+                    messageManager.searchByRecipient(recipient);
+                }
+                case 6 -> {
+                    String hash = JOptionPane.showInputDialog("Enter message hash:");
+                    messageManager.deleteByMessageHash(hash);
+                }
+                case 7 -> messageManager.displayLongestSentMessage();
+                case 8 -> messageManager.displayFullSentReport();
+                case 9 -> back = true;
                 default -> JOptionPane.showMessageDialog(null, "Invalid option.");
             }
         }
     }
-    //this stores messages to a json file
-    public static void storeMessagesToJsonFile(ArrayList<Message> messages) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("messages.json"))) {
-            writer.write("[\n");
-            for (int i = 0; i < messages.size(); i++) {
-                writer.write(messages.get(i).toJson());
-                if (i < messages.size() - 1) writer.write(",");
-                writer.write("\n");
-            }
-            writer.write("]");
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(null, "Error saving messages: " + e.getMessage());
+    case 4 -> {
+        messageManager.storeSentMessagesToJson();
+        JOptionPane.showMessageDialog(null, "Messages saved to JSON, Goodbye");
+        System.exit(0);
+    }
+    default -> JOptionPane.showMessageDialog(null, "Invalid option.");
+}
         }
     }
 }

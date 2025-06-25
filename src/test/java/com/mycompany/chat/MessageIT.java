@@ -63,13 +63,13 @@ public class MessageIT {
     }
 
     @Test
-    public void testMessageListDisplay() {
-        ArrayList<Message> messages = new ArrayList<>();
-        messages.add(new Message("+27663551200", "Hello World"));
-        String result = Message.printMessages(messages);
-        assertTrue(result.contains("MessageID"));
-        assertTrue(result.contains("Hello World"));
-    }
+public void testMessageListDisplay() {
+    Message msg = new Message("+27663551200", "Hello World"); // adds to static array
+    String result = Message.printMessages();
+    assertTrue(result.contains("MessageID"));
+    assertTrue(result.contains("Hello World"));
+}
+
 
     @Test
     //This tests "Store,Diregard and Store 
